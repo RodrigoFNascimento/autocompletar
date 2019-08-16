@@ -94,7 +94,7 @@ public class rodrigonascimento_201600155174_autocompletar {
         }
 
         if (prefix.length() > 0)
-            foundWords.append(getAllWords(currentTrie, new StringBuilder(), prefix));
+            foundWords.append(getAllWords(currentTrie, new StringBuilder(), prefix, prefix.length()));
 
         if (foundWords.length() == 0)
             foundWords.append('-');
@@ -103,19 +103,23 @@ public class rodrigonascimento_201600155174_autocompletar {
 
         return foundWords;
     }
-
+    
     /**
      * Gets every word in the root's children.
      * 
      * @param root      Root of the Trie.
      * @param output    The method's output.
      * @param prefix    The Trie's prefix.
+     * @param depth     Maximum depth of the tree that will be traversed.
      * @return          Every word found in the Trie.
      */
-    public static StringBuilder getAllWords(Trie root, StringBuilder output, StringBuilder prefix) {
+    public static StringBuilder getAllWords(Trie root, StringBuilder output, StringBuilder prefix, int depth) {
 
         if (root == null)
             return new StringBuilder();
+
+        if (depth == 0)
+            return output;
 
         for (int i = 0; i < root.children.length; i++) {
 
@@ -126,7 +130,7 @@ public class rodrigonascimento_201600155174_autocompletar {
                 if (root.children[i].isWord)
                     output.append(prefix.toString() + ",");
 
-                getAllWords(root.children[i], output, prefix);
+                getAllWords(root.children[i], output, prefix, --depth);
                 prefix.deleteCharAt(prefix.length() - 1);
             }
         }
