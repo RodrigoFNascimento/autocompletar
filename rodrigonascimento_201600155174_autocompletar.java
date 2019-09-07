@@ -13,24 +13,26 @@ class Trie {
     boolean isWord;
     Trie[] children;
 
-    public Trie() {
+    public Trie(int alphabetSize) {
 
         this.letter = ' ';
         this.isWord = false;
-        this.children = new Trie[26];
+        this.children = new Trie[alphabetSize];
     }
 
-    public Trie(char letter) {
+    public Trie(char letter, int alphabetSize) {
 
         this.letter = letter;
         this.isWord = false;
-        this.children = new Trie[26];
+        this.children = new Trie[alphabetSize];
     }
 }
 
 public class rodrigonascimento_201600155174_autocompletar {
 
-    public static Trie root = new Trie();
+    public static int ALPHABET_SIZE = 26;
+
+    public static Trie root = new Trie(ALPHABET_SIZE);
 
     /**
      * Inserts a key into a Trie.
@@ -50,7 +52,7 @@ public class rodrigonascimento_201600155174_autocompletar {
             currentChar = key.charAt(indexInThekey);
             index = currentChar - 'a';
             if (currentTrie.children[index] == null) 
-                currentTrie.children[index] = new Trie(currentChar);
+                currentTrie.children[index] = new Trie(currentChar, ALPHABET_SIZE);
        
             // Goes down the tree
             currentTrie = currentTrie.children[index]; 
@@ -61,85 +63,88 @@ public class rodrigonascimento_201600155174_autocompletar {
     } 
 
     /**
-     * Searchs the Trie for compatible words.
+     * Searchs the trie for word suggestions.
      * 
+     * @param root  Root of the trie to be searched.
      * @param word  Word to be searched.
-     * @return      Every word found.
+     * @return      Words found separated by a comma.
      */
-    static StringBuilder search(String word) {
+    public static StringBuilder search(Trie root, String word) {
 
-        int charIndex;
         Trie currentTrie = root;
-        char currentChar;
-        StringBuilder foundWords = new StringBuilder();
+        char currentChar = ' ';
+        int charIndex = 0;
         StringBuilder prefix = new StringBuilder();
-        int wordLength = word.length();
+        StringBuilder output = new StringBuilder();
 
-        for (int i = 0; i < wordLength; i++) {
+        // Iterates through the word
+        for (int i = 0; i < word.length(); i++) {
 
             currentChar = word.charAt(i);
             charIndex = currentChar - 'a';
 
-            if (currentTrie.children[charIndex] != null) {
+            // Goes down the trie
+            currentTrie = currentTrie.children[charIndex];
 
-                prefix.append(currentChar);
-
-                if (currentTrie.children[charIndex].isWord)
-                    foundWords.append(prefix + ",");
-
-                currentTrie = currentTrie.children[charIndex];
-            } else {
+            // Gets the words from the trie
+            if (currentTrie != null)
+                output.append(getWords(currentTrie, new StringBuilder(), prefix, i + 1));
+            else
                 break;
-            }
         }
 
-        if (prefix.length() > 0)
-            foundWords.append(getAllWords(currentTrie, new StringBuilder(), prefix, prefix.length()));
-
-        if (foundWords.length() == 0)
-            foundWords.append('-');
+        // If no word is found on the trie, the output will be empty
+        if (output.length() == 0)
+            output.append('-');
         else
-            foundWords.deleteCharAt(foundWords.length() - 1);   // There will be a ',' at the end
-
-        return foundWords;
-    }
-    
-    /**
-     * Gets every word in the root's children.
-     * 
-     * @param root      Root of the Trie.
-     * @param output    The method's output.
-     * @param prefix    The Trie's prefix.
-     * @param depth     Maximum depth of the tree that will be traversed.
-     * @return          Every word found in the Trie.
-     */
-    public static StringBuilder getAllWords(Trie root, StringBuilder output, StringBuilder prefix, int depth) {
-
-        if (root == null)
-            return new StringBuilder();
-
-        if (depth == 0)
-            return output;
-
-        for (int i = 0; i < root.children.length; i++) {
-
-            if (root.children[i] != null) {
-
-                prefix.append(root.children[i].letter);
-
-                if (root.children[i].isWord)
-                    output.append(prefix.toString() + ",");
-
-                getAllWords(root.children[i], output, prefix, --depth);
-                prefix.deleteCharAt(prefix.length() - 1);
-            }
-        }
+            output.deleteCharAt(output.length() - 1);   // Removes the traling comma
 
         return output;
     }
 
     /**
+     * Gets every word in a trie, starting at the root until the desired depth.
+     * 
+     * @param root      Root of the trie.
+     * @param output    Every word found separated by a comma.
+     * @param prefix    Prefix of all words.
+     * @param depth     Maximum depth of the trie that should be traversed.
+     * @return          Every word found separated by a comma.
+     */
+    public static StringBuilder getWords(Trie root, StringBuilder output, StringBuilder prefix, int depth) {
+
+        if (root == null || depth < 0)
+            return new StringBuilder();
+
+        prefix.append(root.letter);
+
+        if (root.isWord && (depth == 0 || depth == 1))
+            output.append(prefix).append(",");
+
+        if (depth > 0) {
+
+            // Iterates over the children
+            for (int i = 0; i < root.children.length; i++) {
+
+                if (root.children[i] != null) {
+    
+                    // Recurs down the tree
+                    getWords(root.children[i], output, prefix, depth - 1);
+
+                    // Deletes all the letters added through the recursion
+                    // in order to clear the word and move on to the next sibling
+                    if (prefix.length() > 0)
+                        prefix.deleteCharAt(prefix.length() - 1);
+                }
+            }
+        }
+
+        return output;
+    }
+    
+    /**
      * Writes content to file.
+     * 
      * @param fileName  Name of the file (with extension) to be writen.
      * @param content   Content to be writen on the file.
      * @throws FileNotFoundException
@@ -178,10 +183,9 @@ public class rodrigonascimento_201600155174_autocompletar {
 
                 searchedWord = reader.readLine();
 
-                foundWords = search(searchedWord);
+                foundWords = search(root, searchedWord);
 
                 writeToFile(args[1], searchedWord + ":" + foundWords + "\n");
-                
             }
 
         } catch (Exception ex) {
