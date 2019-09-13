@@ -59,7 +59,7 @@ public class rodrigonascimento_201600155174_autocompletar {
         } 
        
         // Marks last node as word
-        currentTrie.isWord = true; 
+        currentTrie.isWord = true;
     } 
 
     /**
@@ -74,30 +74,31 @@ public class rodrigonascimento_201600155174_autocompletar {
         Trie currentTrie = root;
         char currentChar = ' ';
         int charIndex = 0;
+        int depth;
         StringBuilder prefix = new StringBuilder();
         StringBuilder output = new StringBuilder();
 
         // Iterates through the word
-        for (int i = 0; i < word.length(); i++) {
+        for (depth = 0; depth < word.length(); depth++) {
 
-            currentChar = word.charAt(i);
+            currentChar = word.charAt(depth);
             charIndex = currentChar - 'a';
 
-            // Goes down the trie
+            if (currentTrie.children[charIndex] == null)
+                break;
+
             currentTrie = currentTrie.children[charIndex];
 
-            // Gets the words from the trie
-            if (currentTrie != null)
-                output.append(getWords(currentTrie, new StringBuilder(), prefix, i + 1));
-            else
-                break;
+            prefix.append(currentTrie.letter);
         }
+
+        output.append(getWords(currentTrie, new StringBuilder(), prefix, depth));
 
         // If no word is found on the trie, the output will be empty
         if (output.length() == 0)
             output.append('-');
         else
-            output.deleteCharAt(output.length() - 1);   // Removes the traling comma
+            output.deleteCharAt(output.length() - 1);   // Removes the trailing comma
 
         return output;
     }
@@ -113,13 +114,8 @@ public class rodrigonascimento_201600155174_autocompletar {
      */
     public static StringBuilder getWords(Trie root, StringBuilder output, StringBuilder prefix, int depth) {
 
-        if (root == null || depth < 0)
-            return new StringBuilder();
-
-        prefix.append(root.letter);
-
-        if (root.isWord && (depth == 0 || depth == 1))
-            output.append(prefix).append(",");
+        if (root.isWord)
+            output.append(prefix).append(',');
 
         if (depth > 0) {
 
@@ -127,6 +123,8 @@ public class rodrigonascimento_201600155174_autocompletar {
             for (int i = 0; i < root.children.length; i++) {
 
                 if (root.children[i] != null) {
+
+                    prefix.append(root.children[i].letter);
     
                     // Recurs down the tree
                     getWords(root.children[i], output, prefix, depth - 1);
